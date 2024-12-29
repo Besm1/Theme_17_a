@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from routers import task, user
 
-app = FastAPI()
+app = FastAPI(swagger_ui_parameters={"tryItOutEnabled": True}, debug=True)
 
 @app.get('/')
 async def main():
