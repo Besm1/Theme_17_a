@@ -1,0 +1,19 @@
+from app.backend.db import Base
+from sqlalchemy import String, Integer,Column
+from sqlalchemy.orm import relationship
+from sqlalchemy.schema import CreateTable
+
+
+class User(Base):
+    __tablename__ = 'users'
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String)
+    firstname = Column(String)
+    lastname = Column(String)
+    age = Column(Integer)
+    slug = Column(String, unique=True, index=True)
+    task = relationship('Task', back_populates='users')
+
+
+print(CreateTable(User.__table__))
