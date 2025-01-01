@@ -21,13 +21,15 @@ async def all_users(db: Annotated[Session, Depends(get_db)]):
 
 @router.get(path='/user_id/{user_id}')
 async def user_by_id(db:Annotated[Session, Depends(get_db)], user_id:str):
-    if user_id.isnumeric():
-        user = db.scalars(select(User).where(User.id == int(user_id))).one()
-    else:
-        user = db.scalars(select(User).where(User.username == user_id)).one()
-    if user:
-        return user
-    raise HTTPException(status_code=404, detail=f'User {user_id} not found.')
+    try:
+        if user_id.isnumeric():
+            user = db.scalars(select(User).where(User.id == int(user_id))).one()
+        else:
+            user = db.scalars(select(User).where(User.username == user_id)).one()
+        if user:
+            return user
+    except Exception:
+        raise HTTPException(status_code=404, detail=f'User {user_id} not found.')
 
 @router.post('/create')
 async def create_user(db:Annotated[Session, Depends(get_db)], new_user:CreateUser):
@@ -41,29 +43,33 @@ async def create_user(db:Annotated[Session, Depends(get_db)], new_user:CreateUse
 
 @router.put('/update/{user_id}')
 async def update_user(db:Annotated[Session, Depends(get_db)], user_id:str, upd_user:UpdateUser ):
-    if user_id.isnumeric():
-        user = db.scalars(select(User).where(User.id == int(user_id))).one()
-    else:
-        user = db.scalars(select(User).where(User.username == user_id)).one()
-    if user:
-        db.execute(update(User).where(User.id == user.id).values(firstname=upd_user.firstname,
-                                                                 lastname=upd_user.lastname,
-                                                                 age=upd_user.age
-                                                                 ))
-        db.commit()
-        return {'status_code': status.HTTP_200_OK,
-                'transaction': 'Successful user update.' }
-    raise HTTPException(status_code=404, detail=f'User {user_id} not found.')
+    try:
+        if user_id.isnumeric():
+            user = db.scalars(select(User).where(User.id == int(user_id))).all()
+        else:
+            user = db.scalars(select(User).where(User.username == user_id)).all()
+        if user:
+            db.execute(update(User).where(User.id == user.id).values(firstname=upd_user.firstname,
+                                                                     lastname=upd_user.lastname,
+                                                                     age=upd_user.age
+                                                                     ))
+            db.commit()
+            return {'status_code': status.HTTP_200_OK,
+                    'transaction': 'Successful user update.' }
+    except Exception:
+        raise HTTPException(status_code=404, detail=f'User {user_id} not found.')
 
 @router.delete('/delete/{user_id}')
 async def delete_user (db:Annotated[Session, Depends(get_db)], user_id:str):
-    if user_id.isnumeric():
-        user = db.scalars(select(User).where(User.id == int(user_id))).one()
-    else:
-        user = db.scalars(select(User).where(User.username == user_id)).one()
-    if user:
-        db.execute(delete(User).where(User.id == user.id))
-        db.commit()
-        return {'status_code': status.HTTP_200_OK,
-                'transaction': 'Successful user delete.' }
-    raise HTTPException(status_code=404, detail=f"User {user_id} not found.")
+    try:
+        if user_id.isnumeric():
+            user = db.scalars(select(User).where(User.id == int(user_id))).one()
+        else:
+            user = db.scalars(select(User).where(User.username == user_id)).one()
+        if user:
+            db.execute(delete(User).where(User.id == user.id))
+            db.commit()
+            return {'status_code': status.HTTP_200_OK,
+                    'transaction': 'Successful user delete.' }
+    except Exception:
+        raise HTTPException(status_code=404, detail=f"User {user_id} not found.")
