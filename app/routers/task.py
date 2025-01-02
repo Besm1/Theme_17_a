@@ -10,6 +10,8 @@ from app.schemas import CreateTask, UpdateTask
 # Функции работы с записями.
 from sqlalchemy import insert, select, update, delete
 # Функция создания slug-строки
+from slugify import slugify
+
 
 router = APIRouter(prefix='/task',tags=['task'])
 

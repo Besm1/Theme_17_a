@@ -11,7 +11,7 @@ from app.schemas import CreateUser, UpdateUser
 from sqlalchemy import insert, select, update, delete
 # Функция создания slug-строки
 from slugify import slugify
-from pprint import pprint
+
 router = APIRouter(prefix='/user',tags=['user'])
 
 @router.get(path='/all_users')
@@ -33,10 +33,12 @@ async def user_by_id(db:Annotated[Session, Depends(get_db)], user_id:str):
 
 @router.post('/create')
 async def create_user(db:Annotated[Session, Depends(get_db)], new_user:CreateUser):
-    db.execute(insert(User).values(username=new_user.username,
-                                   firstname=new_user.firstname,
-                                   lastname=new_user.lastname,
-                                   age=new_user.age))
+    db.execute(insert(User).values(username=new_user.username
+                                   , firstname=new_user.firstname
+                                   , lastname=new_user.lastname
+                                   , age=new_user.age
+                                   , slug=slugify(text=new_user.username)
+                                   ))
     db.commit()
     return {'status_code': status.HTTP_201_CREATED,
             'transaction': 'Successful' }
@@ -49,9 +51,10 @@ async def update_user(db:Annotated[Session, Depends(get_db)], user_id:str, upd_u
         else:
             user = db.scalars(select(User).where(User.username == user_id)).all()
         if user:
-            db.execute(update(User).where(User.id == user.id).values(firstname=upd_user.firstname,
-                                                                     lastname=upd_user.lastname,
-                                                                     age=upd_user.age
+            db.execute(update(User).where(User.id == user.id).values(firstname=upd_user.firstname
+                                                                     , lastname=upd_user.lastname
+                                                                     , age=upd_user.age
+                                                                     , slug=slugify(text=upd_user.username)
                                                                      ))
             db.commit()
             return {'status_code': status.HTTP_200_OK,
