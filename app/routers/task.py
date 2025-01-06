@@ -22,13 +22,13 @@ async def all_tasks(db: Annotated[Session, Depends(get_db)]):
     return tasks
 
 @router.get(path='/task_id/{task_id}')
-async def task_by_id(db: Annotated[Session, Depends(get_db)], user_id:int, task_id:int):
+async def task_by_id(db: Annotated[Session, Depends(get_db)], task_id:int):
     try:
         task = db.scalars(select(Task).where(Task.id == task_id)).one()
         if task:
             return task
     except Exception as e:
-        raise HTTPException(status_code=404, detail=f'Task {task_id} for user {user_id} not found: {e}.')
+        raise HTTPException(status_code=404, detail=f'Task {task_id} not found: {e}.')
 
 @router.post('/create/{user_id}')
 async def create_task(db: Annotated[Session, Depends(get_db)], user_id:str,  new_task: CreateTask):
