@@ -2,21 +2,20 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status, HTTPException, Path
 # Сессия БД
 from sqlalchemy.orm import Session
-# Функция подключения к БД
-from app.backend.db_depends import get_db
-# Аннотации, Модели БД и Pydantic.
-from app.models import User
-from app.schemas import CreateUser, UpdateUser
 # Функции работы с записями.
 from sqlalchemy import insert, select, update, delete
 # Функция создания slug-строки
 from slugify import slugify
 
-router = APIRouter(prefix='/user',tags=['user'])
+# Функция подключения к БД
+from app.backend.db_depends import get_db
+# Аннотации, Модели БД и Pydantic.
+from app.models import User
+from app.models.task import Task
+from app.schemas import CreateUser, UpdateUser
+from app.utils import _get_user_by_id
 
-async def _get_user_by_id(db:Annotated[Session, Depends(get_db)], user_id:str) -> User:
-    return (db.scalars(select(User).where(User.id == int(user_id))).one() if user_id.isnumeric()
-        else db.scalars(select(User).where(User.username == user_id)).one())
+router = APIRouter(prefix='/user',tags=['user'])
 
 
 @router.get(path='/all_users')
@@ -64,8 +63,23 @@ async def delete_user (db:Annotated[Session, Depends(get_db)], user_id:str):
         user = await _get_user_by_id(db, user_id)
         if user:
             db.execute(delete(User).where(User.id == user.id))
+            db.execute(delete(Task).where(Task.user_id == user.id))
             db.commit()
             return {'status_code': status.HTTP_200_OK,
                     'transaction': 'Successful user delete.' }
-    except Exception:
-        raise HTTPException(status_code=404, detail=f"User {user_id} not found.")
+        else:
+            raise HTTPException(status_code=404, detail=f'User {user_id} not found.')
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"User {user_id} deletion failed.")
+
+@router.get('/user_id/tasks/{user_id}')
+async def tasks_by_user_id(db:Annotated[Session, Depends(get_db)], user_id:str):
+    try:
+        user = await _get_user_by_id(db, user_id)
+        if user:
+            tasks = db.scalars(select(Task).where(Task.user_id == user.id)).all()
+            return tasks
+        else:
+            raise HTTPException(status_code=404, detail=f'User {user_id} not found.')
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"User {user_id} deletion failed: {e}.")

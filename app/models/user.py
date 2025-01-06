@@ -15,7 +15,7 @@ class User(Base):
     lastname = Column(String)
     age = Column(Integer)
     slug = Column(String, unique=True, index=True)
-    task = relationship('Task', back_populates='user')
+    task = relationship('Task', back_populates='user', cascade='all,delete-orphan')
 
 
 print(CreateTable(User.__table__))
